@@ -4,6 +4,7 @@ import time
 import datetime
 import argparse
 import subprocess
+import encryption
 
 ################################################################################
 # Pseudocode
@@ -57,6 +58,17 @@ def main():
 		
 		# Run database backup
 		psql_full_dump(db_host, db_username, db_password, backup_full_path)
+
+		# Set key/password for encryption
+		encryption_key = "password"
+
+		# Encrypt file
+		print("[+] Encrypting backup file")
+		encryption.encrypt_file(encryption_key, backup_filename)
+
+		# Decrypt files
+		print("[+] Decrypting backup file")
+		encryption.decrypt_file(encryption_key, "ENCRYPTED_127.0.0.1_full_backup_24052017_181215.psql")
 
 # Function for rull PostgreSQL backup
 def psql_full_dump(dbhost, dbun, dbpass, destination):
