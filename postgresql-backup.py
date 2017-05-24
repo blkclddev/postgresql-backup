@@ -22,6 +22,9 @@ import encryption
 ################################################################################
 # Main function
 def main():
+	# Set key/password for file encryption
+	encryption_key = "password"
+
 	# Check if the script is running as standalone
 	if __name__ == "__main__":
 		# Setup argument parser
@@ -58,9 +61,6 @@ def main():
 		
 		# Run database backup
 		psql_full_dump(db_host, db_username, db_password, backup_full_path)
-
-		# Set key/password for encryption
-		encryption_key = "password"
 
 		# Encrypt file
 		print("[+] Encrypting backup file")
