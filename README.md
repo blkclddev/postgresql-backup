@@ -30,3 +30,6 @@ optional arguments:
   --bucket BUCKET    Used for backups. Cloud storage bucket name
 
 ~~~~
+
+##Example
+postgresql-backup.py--dbhost localhost --remote gcp --project my-project --bucket my-bucket
