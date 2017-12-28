@@ -3,14 +3,14 @@ import sys
 import time
 import argparse
 import subprocess
-import gcestorage
+import gcpstorage
 import credentials
 
 
 ################################################################################
 # Pseudocode
 ################################################################################
-# Handle GCE errors
+# Handle GCP errors
 # Transfer file to S3
 ################################################################################
 # Main function
@@ -23,9 +23,9 @@ def main():
                             help='Used for backups. Set the database hostname or IP address')
         parser.add_argument('--local', action='store',
                             help='Set the local location of the backup file. EX: /path/to/folder')
-        parser.add_argument('--remote', action='store', choices=['gce', 's3'],
-                            help='Used for backups. Set the remote location of the backup fileValid options are gce or s3')
-        parser.add_argument('--project', action='store', help='Used for backups. GCE project name')
+        parser.add_argument('--remote', action='store', choices=['gcp', 's3'],
+                            help='Used for backups. Set the remote location of the backup fileValid options are gcp or s3')
+        parser.add_argument('--project', action='store', help='Used for backups. GCP project name')
         parser.add_argument('--bucket', action='store', help='Used for backups. Cloud storage bucket name')
         args = parser.parse_args()
 
@@ -43,7 +43,7 @@ def main():
         if 'GOOGLE_APPLICATION_CREDENTIALS' in os.environ:
             print("[*] WARNING: GOOGLE_APPLICATION_CREDENTIALS environment variable already set!")
         else:
-            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = str(credentials.gce_keyfile)
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = str(credentials.gcp_keyfile)
 
         # Set the local backup file destination
         if not args.local:
@@ -66,11 +66,11 @@ def main():
         print("[+] Running database backup")
         psql_full_dump(db_host, db_username, db_password, backup_full_path)
 
-        # Check if GCE was set as the remote backup destination
-        if args.remote == "gce":
-            # Upload encrypted file to GCE bucket
-            print("[+] Uploading backup to GCE storage")
-            gcestorage.upload_to_bucket(args.project, args.bucket, backup_full_path,
+        # Check if GCP was set as the remote backup destination
+        if args.remote == "gcp":
+            # Upload encrypted file to GCP bucket
+            print("[+] Uploading backup to GCP storage")
+            gcpstorage.upload_to_bucket(args.project, args.bucket, backup_full_path,
                                         backup_filename)
         elif args.remote == "s3":
             # Upload encrypted file to S3 bucket
