@@ -30,6 +30,7 @@ def main():
 		parser = argparse.ArgumentParser(description='Backup a PostgreSQL database')
 		parser.add_argument('--action', action='store', required=False, choices=['backup', 'decrypt'], help='Action to take')
 		parser.add_argument('--key', action='store', required=False, help='Key used for encrypting the backup files')
+		parser.add_argument('--dfile', action='store', required=False, help='The name of the file to be decrypted. Used with the decrypt action')
 		parser.add_argument('--dbhost', action='store', required=False, help='Used for backups. Set the database hostname or IP address')
 		parser.add_argument('--dbun', action='store', required=False, help='Used for backups. Set the username for connecting to the database')
 		parser.add_argument('--dbpass', action='store', required=False, help='Used for backups. Set the password for connecting to the database')
@@ -44,60 +45,43 @@ def main():
 			parser.print_help()
 			parser.exit()
 
-		# Set database variables
-		db_host = args.dbhost
-		db_username = args.dbun
-		db_password = args.dbpass
+		#Check if the action is set to backup
+		if args.action == "backup"
+			# Set database variables
+			db_host = args.dbhost
+			db_username = args.dbun
+			db_password = args.dbpass
 
-		# Set the local backup file destination
-		if args.local == "":
-			# If the --local argument is empty, set the backup destination to the current directory
-			local_backup_dest = str(args.local)
-			print("[+] Setting local backup destination to: " + local_backup_dest)
-		else:
-			# Otherwise use the provided directory as the destination
-			local_backup_dest = str(os.getcwd())
-			print("[+] Setting local backup destination to: " + local_backup_dest)
+			# Set the local backup file destination
+			if args.local == "":
+				# If the --local argument is empty, set the backup destination to the current directory
+				local_dest = str(os.getcwd())
+				print("[+] Setting local backup destination to: " + local_dest)
+			else:
+				# Otherwise use the provided directory as the destination
+				local_dest = str(args.local)
+				print("[+] Setting local backup destination to: " + local_dest)
 
-		# Create the backup file name & full path
-		backup_filename = str("{host}_full_backup_{date}_{time}.psql".format(host=db_host, date=time.strftime("%d%m%Y"), time=time.strftime("%H%M%S")))
-		backup_full_path = local_backup_dest + "/" + backup_filename
-		print("[+] Setting full path to: " + backup_full_path)
+			# Create the backup file name & full path
+			backup_filename = str("{host}_full_backup_{date}_{time}.psql".format(host=db_host, date=time.strftime("%d%m%Y"), time=time.strftime("%H%M%S")))
+			backup_full_path = local_dest + "/" + backup_filename
+			print("[+] Setting full path to: " + backup_full_path)
+			
+			# Run database backup
+			print("[+] Running database backup")
+			psql_full_dump(db_host, db_username, db_password, backup_full_path)
 
-		# Create the encrypted backup file name & full path
-		encrypted_backup_file_name = "ENCRYPTED_" + backup_filename
-		encrypted_backup_full_path = local_backup_dest + "/" + encrypted_backup_file_name
-		
-		# Run database backup
-		psql_full_dump(db_host, db_username, db_password, backup_full_path)
-
-		# Encrypt file
-		print("[+] Encrypting backup file")
-		encryption.encrypt_file(args.key, backup_filename)
-
-		# Delete Plain text file
-		print("[+] Deleting the plain text file " + backup_full_path)
-		os.remove(backup_full_path)
-
-		# Check if GCE was set as the remote backup destination
-		if args.remote == "gce":
-			# Upload encrypted file to GCE bucket
-			print("[+] Uploading encrypted file to GCE storage")
-			gcestorage.upload_to_bucket(args.project, args.bucket, encrypted_backup_full_path, encrypted_backup_file_name)
-		elif args.remote == "s3":
-			# Upload encrypted file to S3 bucket
-			print("[+] Uploading encrypted file to AWS S3 storage")
-		else:
-			# Invalid remote string provided
-			print("[-] Invalid --remote option! Skipping cloud upload")
-
-		# Download encrypted file from GCE bucket
-		#print("[+] Downloading encrypted file from GCE storage")
-		#gcestorage.download_from_bucket(gce_storage_project, gce_storage_bucket, backup_filename, backup_filename)
-
-		# Decrypt files
-		#print("[+] Decrypting backup file")
-		#encryption.decrypt_file(encryption_key, "ENCRYPTED_127.0.0.1_full_backup_24052017_181215.psql")
+			# Check if GCE was set as the remote backup destination
+			if args.remote == "gce":
+				# Upload encrypted file to GCE bucket
+				print("[+] Uploading encrypted file to GCE storage")
+				gcestorage.upload_to_bucket(args.project, args.bucket, encrypted_backup_full_path, encrypted_backup_file_name)
+			elif args.remote == "s3":
+				# Upload encrypted file to S3 bucket
+				print("[-] WARNING: S3 storage is not currently supported")
+			else:
+				# Invalid remote string provided
+				print("[-] Invalid --remote option! Skipping cloud upload")
 
 # Function for rull PostgreSQL backup
 def psql_full_dump(dbhost, dbun, dbpass, destination):
